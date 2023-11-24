@@ -9,7 +9,12 @@ from torchmetrics.classification import Precision
 
 
 class CustomModel(pl.LightningModule):
-    def __init__(self, model_hparams, optimizer_name, optimizer_hparams):
+    def __init__(
+        self,
+        model_hparams,
+        scheduler_hparams,
+        optimizer_hparams,
+    ):
         """
         Inputs:
             model_hparams - Hyperparameters for the model, as dictionary.
@@ -37,6 +42,7 @@ class CustomModel(pl.LightningModule):
         #     ),  # Замените num_classes на число классов вашей задачи
         # )
         # Create loss module
+        self.max_size = model_hparams["max_size"]
         self.loss_module = nn.CrossEntropyLoss()
         self.valid_precision = Precision(
             task="multiclass", num_classes=model_hparams["num_classes"]
@@ -44,23 +50,35 @@ class CustomModel(pl.LightningModule):
         self.test_precision = Precision(
             task="multiclass", num_classes=model_hparams["num_classes"]
         )
-        self.example_input_array = torch.zeros((1, 3, 256, 256), dtype=torch.float32)
+        self.example_input_array = torch.zeros(
+            (1, 3, self.max_size, self.max_size), dtype=torch.float32
+        )
 
     def forward(self, img):
         return self.model(img)
 
     def configure_optimizers(self):
         # We will support Adam or SGD as optimizers.
-        if self.hparams.optimizer_name == "Adam":
+        optimizer_name = self.hparams.optimizer_hparams["optimizer_name"]
+        t_max = self.hparams.scheduler_hparams["t_max"]
+
+        if optimizer_name == "Adam":
             # AdamW is Adam with a correct implementation of weight decay (see here
             # for details: https://arxiv.org/pdf/1711.05101.pdf)
-            optimizer = optim.AdamW(self.parameters(), **self.hparams.optimizer_hparams)
-        elif self.hparams.optimizer_name == "SGD":
-            optimizer = optim.SGD(self.parameters(), **self.hparams.optimizer_hparams)
-        else:
-            assert False, f'Unknown optimizer: "{self.hparams.optimizer_name}"'
 
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
+            optimizer = optim.AdamW(
+                filter(lambda p: p.requires_grad, self.parameters()),
+                self.hparams.optimizer_hparams["lr"],
+            )
+        elif optimizer_name == "SGD":
+            optimizer = optim.SGD(
+                filter(lambda p: p.requires_grad, self.parameters()),
+                self.hparams.optimizer_hparams["lr"],
+            )
+        else:
+            assert False, f'Unknown optimizer: "{optimizer_name}"'
+
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=t_max)
 
         return [optimizer], [scheduler]
 
@@ -76,16 +94,24 @@ class CustomModel(pl.LightningModule):
         imgs, labels = batch
         preds = self.model(imgs)
         loss = self.loss_module(preds, labels)
-        metric = self.valid_precision.compute(preds.argmax(dim=-1), labels)
-        self.valid_precision.update(metric)
-        # By default logs it per epoch (weighted average over batches)
-        self.log("valid_loss", loss)
-        self.log("valid_metric", metric)
+        acc = self.valid_precision(preds.argmax(dim=-1), labels)
+        metrics = {"val_acc": acc, "val_loss": loss}
+
+        self.valid_precision.update(preds.argmax(dim=-1), labels)
+        self.log_dict(metrics)
+
+        return metrics
 
     def test_step(self, batch, batch_idx):
-        imgs, labels = batch
-        preds = self.model(imgs)
-        self.test_precision.update(preds.argmax(dim=-1), labels)
+        metrics = self.validation_step(batch, batch_idx)
+        metrics = {"test_acc": metrics["val_acc"], "test_loss": metrics["val_loss"]}
+        self.log_dict(metrics)
+
+        # imgs, labels = batch
+        # preds = self.model(imgs)
+        # self.test_precision.update(preds.argmax(dim=-1), labels)
+
+        # return self.test_precision(preds.argmax(dim=-1), labels)
 
 
 class FeatureExtractorFreezeUnfreeze(BaseFinetuning):
