@@ -28,8 +28,8 @@ class CustomModel(pl.LightningModule):
 
         # Create model
         self.model = timm.create_model(
-            "hrnet_w32.ms_in1k",
-            # "efficientvit_b3.r256_in1k",
+            # "hrnet_w32.ms_in1k",
+            "efficientvit_b3.r256_in1k",
             pretrained=True,
             num_classes=model_hparams["num_classes"],
         )
