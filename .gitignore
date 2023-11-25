@@ -7,7 +7,7 @@ __pycache__/
 *$py.class
 *.zip
 temp/
-
+*.mp4
 # C extensions
 *.so
 
