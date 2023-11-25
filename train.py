@@ -12,7 +12,7 @@ from src.utils import train_model
 # PATHS
 PROJECT_NAME = "cp_hackton"
 
-DATASET_PATHS = "/home/jovyan/storage/nikonov/hackaton/splitted_optical_dataset"
+DATASET_PATHS = "/home/jovyan/work/cp_hack/data/dataset_v2_optical_splitted"
 LOAD_CHECKPOINT_FROM = None
 WORK_DIR = "work_dirs"
 BATCH_SIZE = 32

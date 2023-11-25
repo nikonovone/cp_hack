@@ -181,7 +181,6 @@ def main(
     model_masked: str,
     max_size=256,
 ):
-    label_map_reverse = {0: "Бетон", 1: "Грунт", 2: "Дерево", 3: "Кирпич"}
     video_folder = Path(video_folder)
     data = []
     for video_path in track(list(video_folder.glob("*.mp4"))):
@@ -191,10 +190,15 @@ def main(
             model_masked,
             max_size,
         )
-        data.append(
-            {"Имя файла": video_path.stem, "Категория": label_map_reverse[prediction]}
-        )
-    pd.DataFrame(data).to_csv("result_v2.csv", index=False)
+        mapping = {
+            0: 1,
+            1: 3,
+            2: 2,
+            3: 4,
+        }
+
+        data.append({"video_filename": video_path.name, "class": mapping[prediction]})
+    pd.DataFrame(data).to_csv("submit_final.csv", index=False, sep=";")
 
 
 if __name__ == "__main__":
