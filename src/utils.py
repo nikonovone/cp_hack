@@ -1,6 +1,9 @@
 import os
 
+import cv2
+import numpy as np
 import pytorch_lightning as pl
+from PIL import Image
 from pytorch_lightning.callbacks import (
     LearningRateMonitor,
     ModelCheckpoint,
@@ -95,3 +98,38 @@ def train_model(model_name, save_name=None, **kwargs):
     wandb_logger.finalize("success")
 
     return model, result
+
+
+def calculate_average_brightness(image):
+    # Open the image
+    image = Image.fromarray(image)
+
+    # Convert the image to grayscale
+    grayscale_image = image.convert("L")
+
+    # Calculate the mean value of pixel intensities
+    average_brightness = sum(grayscale_image.getdata()) / len(grayscale_image.getdata())
+
+    return average_brightness
+
+
+def get_background(file_path):
+    cap = cv2.VideoCapture(file_path)
+    # we will randomly select 50 frames for the calculating the median
+    frame_indices = cap.get(cv2.CAP_PROP_FRAME_COUNT) * np.random.uniform(size=50)
+    # we will store the frames in array
+    frames = []
+    for idx in frame_indices:
+        # set the frame id to read that particular frame
+        cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+        ret, frame = cap.read()
+        if ret:
+            frames.append(frame)
+        else:
+            break
+    # calculate the median
+    if len(frames) > 2:
+        median_frame = np.median(frames, axis=0).astype(np.uint8)
+        return median_frame
+    else:
+        return None

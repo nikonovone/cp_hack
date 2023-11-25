@@ -36,13 +36,12 @@ class CustomModel(pl.LightningModule):
             num_classes=model_hparams["num_classes"],
         )
 
-        # dropout_rate = 0.5
-        # self.model.classifier = nn.Sequential(
-        #     nn.Dropout(dropout_rate),
-        #     nn.Linear(
-        #         2048, model_hparams["num_classes"]
-        #     ),  # Замените num_classes на число классов вашей задачи
-        # )
+        dropout_rate = 0.2
+        self.model.classifier = nn.Sequential(
+            nn.Dropout(dropout_rate),
+            nn.Linear(2048, model_hparams["num_classes"]),
+        )
+
         # Create loss module
         self.max_size = model_hparams["max_size"]
         self.loss_module = nn.CrossEntropyLoss()
