@@ -12,16 +12,17 @@ from src.utils import train_model
 # PATHS
 PROJECT_NAME = "cp_hackton"
 
-DATASET_PATHS = "data/splitted_dataset_cleaned"
+MODEL_NAME = 'convnextv2_base.fcmae_ft_in22k_in1k'
+DATASET_PATHS = "data/train_val_test"
 LOAD_CHECKPOINT_FROM = None
 WORK_DIR = "work_dirs"
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 LEARNING_RATE = 0.001
-UNFREEZE_AT_EPOCH = 30
-NUM_WORKERS = 4
-NUM_EPOCHS = 50
+UNFREEZE_AT_EPOCH = 2
+NUM_WORKERS = 6
+NUM_EPOCHS = 40
 NUM_CLASSES = 4
-MAX_SIZE = 256
+MAX_SIZE = 288
 GPU_ID = 0
 SEED = 13
 DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -98,7 +99,8 @@ test_loader = DataLoader(
 
 # TRAINING MODEL
 facenet_model, facenet_results = train_model(
-    save_name="Baseline",
+    model_name=MODEL_NAME,
+    save_name=f"Baseline_{MODEL_NAME}",
     model_hparams={
         "num_classes": NUM_CLASSES,
         "max_size": MAX_SIZE,

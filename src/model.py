@@ -11,6 +11,7 @@ from torchmetrics.classification import Precision
 class CustomModel(pl.LightningModule):
     def __init__(
         self,
+        model_name,
         model_hparams,
         scheduler_hparams,
         optimizer_hparams,
@@ -29,7 +30,8 @@ class CustomModel(pl.LightningModule):
         # Create model
         self.model = timm.create_model(
             # "hrnet_w32.ms_in1k",
-            "efficientvit_b3.r256_in1k",
+            #"efficientvit_b3.r256_in1k",
+            model_name,
             pretrained=True,
             num_classes=model_hparams["num_classes"],
         )

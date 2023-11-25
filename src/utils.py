@@ -11,12 +11,13 @@ from pytorch_lightning.loggers import WandbLogger
 from src.model import CustomModel, FeatureExtractorFreezeUnfreeze
 
 
-def train_model(save_name=None, **kwargs):
+def train_model(model_name, save_name=None, **kwargs):
     """
     Inputs:
         save_name (optional) - If specified, this name will be used for
         creating the checkpoint and logging directory.
     """
+    
     wandb_logger = WandbLogger(
         project=kwargs["project_name"],
         save_dir=kwargs["work_dir"],
@@ -38,7 +39,7 @@ def train_model(save_name=None, **kwargs):
                 mode="min",
                 monitor="val_loss",
                 save_top_k=5,
-                filename="{epoch}-{valid_loss:.5f}",
+                filename="{epoch}-{val_loss:.5f}",
                 save_last=True,
             ),
             LearningRateMonitor("epoch"),
@@ -54,6 +55,7 @@ def train_model(save_name=None, **kwargs):
 
     # Check whether pretrained model exists. If yes, load it and skip training
     model = CustomModel(
+        model_name,
         model_hparams=kwargs["model_hparams"],
         scheduler_hparams=kwargs["scheduler_hparams"],
         optimizer_hparams=kwargs["optimizer_hparams"],
