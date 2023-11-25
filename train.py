@@ -12,14 +12,14 @@ from src.utils import train_model
 # PATHS
 PROJECT_NAME = "cp_hackton"
 
-DATASET_PATHS = "data/splitted_dataset_cleaned"
+DATASET_PATHS = "/home/jovyan/storage/nikonov/hackaton/splitted_optical_dataset"
 LOAD_CHECKPOINT_FROM = None
 WORK_DIR = "work_dirs"
 BATCH_SIZE = 32
 LEARNING_RATE = 0.001
-UNFREEZE_AT_EPOCH = 30
+UNFREEZE_AT_EPOCH = 5
 NUM_WORKERS = 4
-NUM_EPOCHS = 50
+NUM_EPOCHS = 40
 NUM_CLASSES = 4
 MAX_SIZE = 256
 GPU_ID = 0
