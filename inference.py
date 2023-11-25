@@ -14,107 +14,6 @@ from src.model import CustomModel
 from src.utils import calculate_average_brightness, get_background
 
 
-def overlay_prediction(frame, prediction_probs_0, prediction_probs_1=None):
-    # Overlay the prediction on the frame
-    # You can implement your own annotation logic here
-    annotated_frame = frame
-
-    # Example: Draw the prediction text on the frame
-    prediction_probs_0 = prediction_probs_0[0]
-    beton_score_0 = round(prediction_probs_0[0], 2)
-    grunt_score_0 = round(prediction_probs_0[1], 2)
-    derevo_score_0 = round(prediction_probs_0[2], 2)
-    kirpich_score_0 = round(prediction_probs_0[3], 2)
-    cv2.putText(
-        annotated_frame,
-        f"Beton: {beton_score_0: .2f}",
-        (10, 30 + 100),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.5,
-        (0, 255, 0),
-        2,
-        cv2.LINE_AA,
-    )
-    cv2.putText(
-        annotated_frame,
-        f"Grunt: {grunt_score_0: .2f}",
-        (10, 50 + 100),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.5,
-        (0, 255, 0),
-        2,
-        cv2.LINE_AA,
-    )
-    cv2.putText(
-        annotated_frame,
-        f"Derevo: {derevo_score_0: .2f}",
-        (10, 70 + 100),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.5,
-        (0, 255, 0),
-        2,
-        cv2.LINE_AA,
-    )
-    cv2.putText(
-        annotated_frame,
-        f"Kirpich: {kirpich_score_0: .2f}",
-        (10, 90 + 100),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.5,
-        (0, 255, 0),
-        2,
-        cv2.LINE_AA,
-    )
-    if prediction_probs_1 is not None:
-        prediction_probs_1 = prediction_probs_1[0]
-        beton_score_1 = round(prediction_probs_1[0], 2)
-        grunt_score_1 = round(prediction_probs_1[1], 2)
-        derevo_score_1 = round(prediction_probs_1[2], 2)
-        kirpich_score_1 = round(prediction_probs_1[3], 2)
-        cv2.putText(
-            annotated_frame,
-            f"Beton: {beton_score_1: .2f}",
-            (500, 30 + 100),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.5,
-            (0, 255, 0),
-            2,
-            cv2.LINE_AA,
-        )
-        cv2.putText(
-            annotated_frame,
-            f"Grunt: {grunt_score_1: .2f}",
-            (500, 50 + 100),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.5,
-            (0, 255, 0),
-            2,
-            cv2.LINE_AA,
-        )
-        cv2.putText(
-            annotated_frame,
-            f"Derevo: {derevo_score_1: .2f}",
-            (500, 70 + 100),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.5,
-            (0, 255, 0),
-            2,
-            cv2.LINE_AA,
-        )
-        cv2.putText(
-            annotated_frame,
-            f"Kirpich: {kirpich_score_1: .2f}",
-            (500, 90 + 100),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.5,
-            (0, 255, 0),
-            2,
-            cv2.LINE_AA,
-        )
-
-    return annotated_frame
-
-
 def load_eval_module(checkpoint_path: str, device: torch.device) -> CustomModel:
     module = CustomModel.load_from_checkpoint(checkpoint_path)
     module.to(device)
@@ -155,10 +54,8 @@ def array2tensor(image: np.array, max_size, device):
             ToTensorV2(),
         ]
     )
-    try:
-        img = test_transform(image=image)["image"].float() / 255
-    except:
-        print(image)
+
+    img = test_transform(image=image)["image"].float() / 255
     img = (img[np.newaxis, ...]).to(device)
     return img
 
@@ -196,7 +93,7 @@ def predict(
 
     #! проверить
     softmax = torch.nn.Softmax(dim=-1)
-    # predictions = []
+
     predictions_masked = []
     predictions_original = []
     while True:
@@ -259,24 +156,12 @@ def predict(
             predictions_masked.append(preds_masked.cpu().detach().numpy())
             predictions_original.append(preds_original.cpu().detach().numpy())
 
-            # anno_frame = overlay_prediction(
-            #     frame,
-            #     preds_original.cpu().detach().numpy(),
-            #     preds_masked.cpu().detach().numpy(),
-            # )
-            # writer.write(anno_frame)
         else:
             preds_original = softmax(model_original(frame_tensor))
             predictions_original.append(preds_original.cpu().detach().numpy())
-            # anno_frame = overlay_prediction(
-            #     frame,
-            #     preds_original.cpu().detach().numpy(),
-            # )
-            # writer.write(anno_frame)
 
     # Release the video and writer objects
     cap.release()
-    # writer.release()
 
     predictions_original_mean = np.mean(predictions_original, axis=0)
     predictions_masked_mean = np.mean(predictions_masked, axis=0)
